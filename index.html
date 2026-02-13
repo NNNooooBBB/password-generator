@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор паролей</title>
+    <title>Password Generator</title>
     <style>
         * {
             box-sizing: border-box;
@@ -46,7 +46,7 @@
 
         .password-output {
             display: flex;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.5rem;
             gap: 0.5rem;
         }
 
@@ -88,6 +88,49 @@
                 height: 20px;
                 fill: white;
             }
+
+        .strength-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .strength-label {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .strength-text {
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .strength-very-weak {
+            background-color: #ff4d4d;
+            color: white;
+        }
+        .strength-weak {
+            background-color: #ff9999;
+            color: #333;
+        }
+        .strength-medium {
+            background-color: #ffff99;
+            color: #333;
+        }
+        .strength-strong {
+            background-color: #99ff99;
+            color: #333;
+        }
+        .strength-very-strong {
+            background-color: #4dff4d;
+            color: #333;
+        }
 
         .options {
             margin-bottom: 1.5rem;
@@ -195,7 +238,7 @@
     </style>
 </head>
 <body>
-    <!-- Yandex.Metrika counter -->
+        <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -209,52 +252,56 @@
 <noscript><div><img src="https://mc.yandex.ru/watch/106819294" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
     <div class="card">
-        <h1>🔐 Генератор паролей</h1>
+        <h1>🔐 Password Generator</h1>
 
         <div class="password-output">
-            <input type="text" id="password" readonly placeholder="Нажмите «Сгенерировать»">
-            <button id="copy-btn" title="Копировать в буфер обмена">
+            <input type="text" id="password" readonly placeholder="Click «Generate»">
+            <button id="copy-btn" title="Copy to clipboard">
                 <svg viewBox="0 0 24 24">
                     <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                 </svg>
             </button>
         </div>
 
+        <div class="strength-container">
+            <span class="strength-label">Strength:</span>
+            <span id="strength-text" class="strength-text">Medium</span>
+        </div>
+
         <div class="options">
             <div class="option-item">
                 <label>
-                    <input type="checkbox" id="uppercase" checked> Заглавные буквы (A-Z)
+                    <input type="checkbox" id="uppercase" checked> Uppercase (A-Z)
                 </label>
             </div>
             <div class="option-item">
                 <label>
-                    <input type="checkbox" id="lowercase" checked> Строчные буквы (a-z)
+                    <input type="checkbox" id="lowercase" checked> Lowercase (a-z)
                 </label>
             </div>
             <div class="option-item">
                 <label>
-                    <input type="checkbox" id="numbers" checked> Цифры (0-9)
+                    <input type="checkbox" id="numbers" checked> Numbers (0-9)
                 </label>
             </div>
             <div class="option-item">
                 <label>
-                    <input type="checkbox" id="symbols"> Спецсимволы (!@#$%^&*)
+                    <input type="checkbox" id="symbols"> Symbols (!@#$%^&*)
                 </label>
             </div>
         </div>
 
         <div class="length-container">
-            <label for="length">Длина:</label>
+            <label for="length">Length:</label>
             <input type="range" id="length" min="4" max="32" value="12">
             <span id="length-value">12</span>
         </div>
 
-        <button id="generate-btn">Сгенерировать пароль</button>
-        <div class="hint">Нажмите на иконку копирования, чтобы скопировать пароль</div>
+        <button id="generate-btn">Generate Password</button>
+        <div class="hint">Click the copy icon to copy the password</div>
     </div>
 
     <script>
-        // Элементы DOM
         const passwordField = document.getElementById('password');
         const copyBtn = document.getElementById('copy-btn');
         const generateBtn = document.getElementById('generate-btn');
@@ -264,19 +311,65 @@
         const lowercaseCheck = document.getElementById('lowercase');
         const numbersCheck = document.getElementById('numbers');
         const symbolsCheck = document.getElementById('symbols');
+        const strengthText = document.getElementById('strength-text');
 
-        // Наборы символов
         const UPPERCASE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const LOWERCASE_CHARS = 'abcdefghijklmnopqrstuvwxyz';
         const NUMBER_CHARS = '0123456789';
         const SYMBOL_CHARS = '!@#$%^&*()_+[]{}|;:,.<>?';
 
-        // Обновление отображения длины
+        const COMMON_PASSWORDS = [
+            '123456', 'password', '12345678', 'qwerty', '123456789', '12345', '1234', '111111',
+            '1234567', 'dragon', '123123', 'baseball', 'abc123', 'football', 'monkey', 'letmein',
+            '696969', 'shadow', 'master', '666666', 'qwertyuiop', '123321', 'mustang', '1234567890',
+            'michael', '654321', 'superman', '1qaz2wsx', '7777777', '121212', '000000', 'qazwsx'
+        ];
+
         lengthSlider.addEventListener('input', () => {
             lengthValue.textContent = lengthSlider.value;
         });
 
-        // Функция генерации пароля
+        function getPasswordStrength(password) {
+            if (!password) {
+                return { text: '—', className: '', entropy: 0 };
+            }
+
+            if (COMMON_PASSWORDS.includes(password.toLowerCase())) {
+                return { text: 'Very weak', className: 'strength-very-weak', entropy: 0 };
+            }
+
+            const hasLower = /[a-z]/.test(password);
+            const hasUpper = /[A-Z]/.test(password);
+            const hasDigits = /[0-9]/.test(password);
+            const hasSymbols = /[^a-zA-Z0-9]/.test(password);
+
+            let charSetSize = 0;
+            if (hasLower) charSetSize += 26;
+            if (hasUpper) charSetSize += 26;
+            if (hasDigits) charSetSize += 10;
+            if (hasSymbols) charSetSize += 32;
+
+            if (charSetSize === 0) charSetSize = 26;
+
+            const length = password.length;
+            const entropy = length * Math.log2(charSetSize);
+
+            if (entropy < 30) return { text: 'Weak', className: 'strength-weak', entropy };
+            if (entropy < 50) return { text: 'Medium', className: 'strength-medium', entropy };
+            if (entropy < 70) return { text: 'Strong', className: 'strength-strong', entropy };
+            return { text: 'Very strong', className: 'strength-very-strong', entropy };
+        }
+
+        function updateStrengthIndicator() {
+            const password = passwordField.value;
+            const strength = getPasswordStrength(password);
+            strengthText.textContent = strength.text;
+            strengthText.className = 'strength-text';
+            if (strength.className) {
+                strengthText.classList.add(strength.className);
+            }
+        }
+
         function generatePassword() {
             let charset = '';
             if (uppercaseCheck.checked) charset += UPPERCASE_CHARS;
@@ -284,9 +377,8 @@
             if (numbersCheck.checked) charset += NUMBER_CHARS;
             if (symbolsCheck.checked) charset += SYMBOL_CHARS;
 
-            // Если ни один набор не выбран, используем хотя бы строчные буквы (по умолчанию)
             if (charset === '') {
-                alert('Выберите хотя бы один тип символов!');
+                alert('Select at least one character type!');
                 return;
             }
 
@@ -297,30 +389,28 @@
                 password += charset[randomIndex];
             }
             passwordField.value = password;
+            updateStrengthIndicator();
         }
 
-        // Кнопка генерации
         generateBtn.addEventListener('click', generatePassword);
 
-        // Копирование в буфер обмена
         copyBtn.addEventListener('click', () => {
             if (!passwordField.value) {
-                alert('Сначала сгенерируйте пароль!');
+                alert('Generate a password first!');
                 return;
             }
             passwordField.select();
             navigator.clipboard.writeText(passwordField.value).then(() => {
-                // Визуальный фидбек (можно добавить всплывающее уведомление)
-                alert('Пароль скопирован в буфер обмена!');
+                alert('Password copied to clipboard!');
             }).catch(err => {
-                console.error('Ошибка копирования: ', err);
-                alert('Не удалось скопировать пароль. Скопируйте вручную.');
+                console.error('Copy error: ', err);
+                alert('Failed to copy password. Copy manually.');
             });
         });
 
-        // Генерируем пароль при загрузке страницы
-        window.addEventListener('load', generatePassword);
+        window.addEventListener('load', () => {
+            generatePassword();
+        });
     </script>
 </body>
-
 </html>
